@@ -21,32 +21,44 @@ for x in range(sWidth // GridSize + 1):
 	for y in range(sHeight // GridSize + 1):
 		Map[x].append(0)
 
-def new_grid(size):
-	global GridSize, Map
-
-	for x in range(sWidth // size + 1):
-		if x >= sWidth // GridSize + 1:
-			Map.append([])
-			for y in range(sHeight // GridSize + 1):
-				Map[x].append(0)
-
-	for x in range(sWidth // size + 1):
-		for y in range(sHeight // size + 1):
-			if y >= sHeight // GridSize + 1:
-				Map[x].append(0)
-
-	GridSize = size
-
-
 
 ant_position = (sWidth // GridSize // 2, sHeight // GridSize // 2)
 ant_direction = 0
 
+def new_grid(size):
+	global GridSize, Map, ant_position
+
+	new_map = []
+	for x in range(sWidth // size + 1):
+		new_map.append([])
+		for y in range(sHeight // size + 1):
+			new_map[x].append(0)
+
+	xSpacing = ((sWidth  // size + 1) - (sWidth  // GridSize + 1)) // 2
+	ySpacing = ((sHeight // size + 1) - (sHeight // GridSize + 1)) // 2
+
+	for x in range(sWidth // size + 1):
+		for y in range(sHeight // size + 1):
+			if x >= xSpacing and y >= ySpacing:
+				try:
+					new_map[x][y] = Map[x - xSpacing][y - ySpacing]
+				except:
+					pass
+	ant_position = (ant_position[0] + xSpacing, ant_position[1] + ySpacing)
+
+	Map = new_map
+	GridSize = size
+	return
+
+should_draw = True
 while True:
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			pygame.quit()
 			exit(0)
+		elif event.type == pygame.keydown:
+			if event.key == pygame.K_SPACE:
+				should_draw = should_draw == False
 
 	if ant_direction % 4 == 0:   # Move the ant based on it's direction
 		ant_position = (ant_position[0] + 1, ant_position[1])
@@ -57,10 +69,14 @@ while True:
 	elif ant_direction % 4 == 3:
 		ant_position = (ant_position[0], ant_position[1] + 1)
 
+
 	try:
 		Map[ant_position[0]][ant_position[1]]
+		if ant_position[0] < 0 or ant_position[1] < 0:
+			raise IndexError
 	except IndexError:
 		new_grid(GridSize // 2)
+
 	if Map[ant_position[0]][ant_position[1]] != 1:
 		Map[ant_position[0]][ant_position[1]] = 1
 		ant_direction += 1
@@ -70,6 +86,9 @@ while True:
 
 
 	# Drawing phase
+
+	if not should_draw:
+		continue
 
 	screen.fill(black)
 
@@ -90,4 +109,4 @@ while True:
 		pygame.draw.line(screen, lGrey, [0, i * GridSize], [sWidth, i * GridSize], 1)
 
 	pygame.display.flip()
-	clock.tick(100)
+	#clock.tick(60)
